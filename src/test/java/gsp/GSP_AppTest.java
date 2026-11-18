@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import gsp.hibernate.GSP_DAO;
-import gsp.jackson_json.GSP_DataDeserializer;
+import gsp.jackson.GSP_DataDeserializer;
 import gsp.model.GSP_Data;
 import gsp.model.GSP_Entity;
 import gsp.network.GSP_HttpClient;
@@ -114,5 +114,28 @@ class GSP_AppTest {
         assertThrows(RuntimeException.class, () -> gspApp.run());
         verifyNoInteractions(gspDao);
     }
+    
+    @Test
+    @DisplayName("Should filter out records with null or invalid complex ID without failing valid batch items")
+    void run_PayloadWithInvalidIds_SkipsInvalidRecordsAndPersistsValidOnes() throws Exception {
+        // Arrange: 2 invalid records (null and non-numeric ID) and 1 valid record
+        String sampleJson = "["
+                + "{\"complex\": null, \"mailaddress\": \"Broken St 1\"},"
+                + "{\"complex\": \"N/A\", \"mailaddress\": \"Broken St 2\"},"
+                + "{\"complex\": 303, \"mailaddress\": \"Valid St 3\", \"fuels\": [\"AI-95\"], \"latitude\": 52.40, \"longitude\": 31.00, \"district\": \"South\"}"
+                + "]";
+
+        when(httpClient.fetchRawJson()).thenReturn(sampleJson);
+
+        // Act
+        int processedCount = gspApp.run();
+
+        // Assert: only the single valid record is persisted
+        assertEquals(1, processedCount);
+        verify(gspDao, times(1)).saveOrUpdateBatch(entityListCaptor.capture());
+        assertEquals(1, entityListCaptor.getValue().size());
+        assertEquals(303, entityListCaptor.getValue().get(0).getId());
+    }
+
 }
 

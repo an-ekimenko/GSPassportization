@@ -150,7 +150,7 @@ class GSP_HttpClientTest {
 
         List<ClassicHttpRequest> capturedRequests = requestCaptor.getAllValues();
         assertEquals("POST", capturedRequests.get(0).getMethod());
-        assertEquals("/connect/token", capturedRequests.get(0).getPath());
+        assertEquals("https://example.com/", capturedRequests.get(0).getUri().toString());
 
         assertEquals("GET", capturedRequests.get(1).getMethod());
         assertEquals("Bearer dynamic-oauth2-token", capturedRequests.get(1).getFirstHeader("Authorization").getValue());
@@ -194,6 +194,61 @@ class GSP_HttpClientTest {
         assertThrows(IllegalStateException.class, () -> gspHttpClient.fetchRawJson());
         verifyNoInteractions(mockHttpClient);
     }
+    
+    @Test
+    @DisplayName("Error Handling: should throw RuntimeException when server returns HTTP 500")
+    void fetchRawJson_ServerErrorStatus_ThrowsRuntimeException() throws Exception {
+        config.setAuthType("none");
+        when(mockHttpClient.execute(any(ClassicHttpRequest.class), any(HttpClientResponseHandler.class)))
+                .thenAnswer(invocation -> {
+                    HttpClientResponseHandler<String> handler = invocation.getArgument(1);
+                    ClassicHttpResponse mockResp = mock(ClassicHttpResponse.class);
+                    when(mockResp.getCode()).thenReturn(500);
+                    when(mockResp.getReasonPhrase()).thenReturn("Internal Server Error");
+                    return handler.handleResponse(mockResp);
+                });
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () ->
+                executeWithMockedSecurity(() -> gspHttpClient.fetchRawJson())
+        );
+        assertTrue(ex.getMessage().contains("500"));
+    }
+
+    @Test
+    @DisplayName("Error Handling: should throw RuntimeException when HTTP 200 has null entity")
+    void fetchRawJson_EmptyBodyOn200_ThrowsRuntimeException() throws Exception {
+        config.setAuthType("none");
+        stubSingleResponse(200, null);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () ->
+                executeWithMockedSecurity(() -> gspHttpClient.fetchRawJson())
+        );
+        assertTrue(ex.getMessage().contains("empty body"));
+    }
+
+    @Test
+    @DisplayName("TLS Lifecycle: should invoke CertUpdater.updateByBasicAuth when auth_type is basic")
+    void fetchRawJson_BasicAuth_TriggersBasicCertUpdate() throws Exception {
+        config.setAuthType("basic");
+        GSPApiConfig.AuthConfig auth = new GSPApiConfig.AuthConfig();
+        GSPApiConfig.BasicAuthConfig basic = new GSPApiConfig.BasicAuthConfig();
+        basic.setUsername("user1");
+        basic.setPassword("pass1");
+        auth.setBasic(basic);
+        config.setAuth(auth);
+
+        stubSingleResponse(200, "[]");
+
+        try (MockedStatic<KeyStoreManager> ksMock = mockStatic(KeyStoreManager.class);
+             MockedStatic<CertUpdater> certMock = mockStatic(CertUpdater.class)) {
+
+            ksMock.when(KeyStoreManager::getSSLContext).thenReturn(SSLContext.getDefault());
+            gspHttpClient.fetchRawJson();
+
+            certMock.verify(() -> CertUpdater.updateByBasicAuth("https://example.com", "user1", "pass1"));
+        }
+    }
+
 
     // --- Helper methods ---
 

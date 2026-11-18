@@ -91,5 +91,12 @@ public class GSPApiConfig {
 		private int responseTimeoutMs = 15000;
 	}
 
+	@JsonProperty("max_timeout_ms")
+	private long maxTimeoutMs = 300000L;
+
+	@JsonProperty("initial_timeout_ms")
+	private long initialTimeoutMs = 10000L;
+
 }
+
 

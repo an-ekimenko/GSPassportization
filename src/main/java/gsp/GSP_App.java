@@ -62,12 +62,19 @@ public class GSP_App {
 				return 0;
 			}
 
-			// Transform DTOs into persistent entities and deduplicate by ID via stream processing
+			// Transform DTOs into persistent entities, drop invalid IDs, and deduplicate by ID via stream processing
 			logger.debug("Executing data filtering and mapping [Source count: {}]...", dtoData.size());
             
 			Set<Integer> seenIds = new HashSet<>();
             
 			List<GSP_Entity> gsEntities = dtoData.stream()
+				.filter(station -> {
+					if (station.getId() == null) {
+						logger.warn("Skipping gas station record with missing or invalid 'complex' ID: {}", station);
+						return false;
+					}
+					return true;
+				})
 				.filter(station -> seenIds.add(station.getId())) 
 				.map(station -> new GSP_Entity(
 						station.getId(),
@@ -80,9 +87,9 @@ public class GSP_App {
 				))
 				.collect(Collectors.toList());
 
-			// Skip database operations if no unique entities remain after filtering
+			// Skip database operations if no valid unique entities remain after filtering
 			if (gsEntities.isEmpty()) {
-				logger.warn("All fetched gas station records were filtered out as duplicates. Database write skipped.");
+				logger.warn("All fetched gas station records were filtered out (invalid IDs or duplicates). Database write skipped.");
 				return 0;
 			}
 

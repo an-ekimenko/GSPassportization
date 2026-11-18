@@ -26,3 +26,10 @@ gs_passportization-api:
       client_secret: YOUR_CLIENT_SECRET
       scope: YOUR_SCOPE
       grant_type: client_credentials
+
+  # Fault-tolerance retry boundary constraints based on exponential backoff rules:
+  # max_timeout_ms     - Total maximum time budget (in ms) allocated to this specific worker
+  #                      to fetch data from the API across the initial run and all retry attempts.
+  # initial_timeout_ms - Base delay interval (in ms) before the first retry attempt.
+  max_timeout_ms: 300000
+  initial_timeout_ms: 10000    
