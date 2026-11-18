@@ -219,7 +219,7 @@ By default, the application initializes and writes all runtime traces into a loc
 
 ```bash
 # 1. Execute utilizing the default local logs directory (./logs/)
-java -jar java -jar /path/to/Jck_GSPassportization.jar
+java -jar /path/to/Jck_GSPassportization.jar
 
 # 2. Alternative: Execute with explicit log directory overriding via JVM System Properties
 java -Dlog.dir=/var/log/gsp_applications -jar /path/to/Jck_GSPassportization.jar
