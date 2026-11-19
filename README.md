@@ -1,10 +1,10 @@
-# Jck_GS_Pasportization
+# GS_Pasportization
 
 **Extracts, parses, and stores data about gas station attributes from a web API into an MS SQL staging environment for SAP BW/4HANA.**
 
 ## 📋 Description
 
-The **Jck_GS_Pasportization** application automates the extraction, parsing, and storage of gas station complex attributes — including coordinates, addresses, fuel brands, and active service equipment statuses. The application retrieves raw JSON data from a remote web service, transforms the payloads defensively, and writes the records to a target MS SQL database. This environment serves as a high-performance intermediate staging area (PSA) for subsequent ETL loading into **SAP BW/4HANA**.
+The **GS_Pasportization** application automates the extraction, parsing, and storage of gas station complex attributes — including coordinates, addresses, fuel brands, and active service equipment statuses. The application retrieves raw JSON data from a remote web service, transforms the payloads defensively, and writes the records to a target MS SQL database. This environment serves as a high-performance intermediate staging area (PSA) for subsequent ETL loading into **SAP BW/4HANA**.
 
 ## 🚀 Features
 
@@ -29,12 +29,12 @@ To eliminate library redundancy and optimize disk space usage across multiple in
 
 ### 1. Directory Layout
 
-The `dependencies/` folder is located **one level above** the application root directory (`Jck_GS_Pasportization`), serving as a common binary store for neighboring integration modules:
+The `dependencies/` folder is located **one level above** the application root directory (`GS_Pasportization`), serving as a common binary store for neighboring integration modules:
 
 ```text
 shared-environment-root/
 ├── dependencies/               <-- Shared runtime external libraries (*.jar)
-└── Jck_GS_Pasportization/      <-- This application root directory
+└── GS_Pasportization/      <-- This application root directory
     ├── config/                 <-- External environment configuration (Hibernate, API)
     ├── src/
     │   ├── main/               <-- Production source code
